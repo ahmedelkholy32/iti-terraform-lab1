@@ -8,6 +8,22 @@ resource "aws_vpc" "elkholy-vpc" {
     Name = "elkholy-vpc"
   }
 }
+resource "aws_internet_gateway" "elkholy-ig" {
+  vpc_id = aws_vpc.elkholy-vpc.id
+  tags = {
+    Name = "elkholy-ig"
+  }
+}
+resource "aws_route_table" "elkholy-rt" {
+  vpc_id = aws_vpc.elkholy-vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.elkholy-ig.id
+  }
+  tags = {
+    Name = "elkoly-rt"
+  }
+}
 resource "aws_subnet" "elkholy-subnet" {
   vpc_id = aws_vpc.elkholy-vpc.id
   cidr_block = "10.0.1.0/24"
@@ -16,10 +32,29 @@ resource "aws_subnet" "elkholy-subnet" {
     Name = "elkholy-subnet"
   }
 }
+resource "aws_route_table_association" "elkholy-art" {
+  subnet_id = aws_subnet.elkholy-subnet.id
+  route_table_id = aws_route_table.elkholy-rt.id
+}
+resource "aws_security_group" "elkholy-sg" {
+  name = "allow_ssh"
+  vpc_id = aws_vpc.elkholy-vpc.id
+  ingress {
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags = {
+    Name = "elkholy-sg"
+  }
+}
 resource "aws_instance" "lab1" {
   ami = "ami-03c25e6a40ef25506"
   instance_type = "t2.micro"
   subnet_id = aws_subnet.elkholy-subnet.id
+  associate_public_ip_address = true
+  vpc_security_group_ids = [aws_security_group.elkholy-sg.id]
   tags = {
     Name = "elkholy-lab1"
   }
