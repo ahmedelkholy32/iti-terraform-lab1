@@ -45,16 +45,40 @@ resource "aws_security_group" "elkholy-sg" {
     protocol = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
   tags = {
     Name = "elkholy-sg"
   }
 }
+data "aws_ami" "amazon-linux2" {
+  most_recent = true
+  owners = [ "amazon" ]
+  filter {
+    name = "name"
+    values = [ "al2023-ami-2023*" ]
+  }
+  filter {
+    name = "architecture"
+    values = [ "x86_64" ]
+  }
+  filter {
+    name = "virtualization-type"
+    values = [ "hvm" ]
+  }
+}
 resource "aws_instance" "lab1" {
-  ami = "ami-03c25e6a40ef25506"
+  ami = data.aws_ami.amazon-linux2.id
   instance_type = "t2.micro"
   subnet_id = aws_subnet.elkholy-subnet.id
   associate_public_ip_address = true
   vpc_security_group_ids = [aws_security_group.elkholy-sg.id]
+  key_name = "iti-server"
   tags = {
     Name = "elkholy-lab1"
   }
